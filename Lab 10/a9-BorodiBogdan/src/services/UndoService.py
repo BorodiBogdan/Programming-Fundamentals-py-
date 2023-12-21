@@ -1,27 +1,27 @@
-from src.domain.command import *
+from src.domain.commandthatcanbecalled import *
 from src.domain.UndoRedoError import UndoRedoError
 
 
 class UndoService:
     def __init__(self):
-        self.__undo = []
-        self.__redo = []
+        self.__undo_operation_stack = []
+        self.__redo_operation_stack = []
 
-    def register(self, oper: CascadianOperation):
-        self.__undo.append(oper)
+    def register_operation(self, operation: OperationThatCascades):
+        self.__undo_operation_stack.append(operation)
 
     def undo(self):
-        if not self.__undo:
+        if not self.__undo_operation_stack:
             raise UndoRedoError("No more undos!")
 
-        o = self.__undo.pop()
-        self.__redo.append(o)
-        o.undo()
+        undo_operation = self.__undo_operation_stack.pop()
+        self.__redo_operation_stack.append(undo_operation)
+        undo_operation.undo()
 
     def redo(self):
-        if not self.__redo:
+        if not self.__redo_operation_stack:
             raise UndoRedoError("No more redos!")
 
-        o = self.__redo.pop()
-        self.__undo.append(o)
-        o.redo()
+        redo_operation = self.__redo_operation_stack.pop()
+        self.__undo_operation_stack.append(redo_operation)
+        redo_operation.redo()

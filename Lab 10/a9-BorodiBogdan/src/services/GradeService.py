@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from src.domain.command import *
+from src.domain.commandthatcanbecalled import *
 
 class GradeService:
     def __init__(self, grade_repository, undo_service):
@@ -8,10 +8,10 @@ class GradeService:
         self.undo_service = undo_service
 
     def add_grade(self, discipline_id, student_id, grade_value):
-        RedoCommand = Command(self.add_grade, *(discipline_id, student_id, grade_value))
-        UndoCommand = Command(self.remove_grade, *(discipline_id, student_id, grade_value))
-        Operations = [Operation(UndoCommand, RedoCommand)]
-        self.undo_service.register(CascadianOperation(Operations))
+        RedoCommand = CommandThatCanBeCalled(self.add_grade, *(discipline_id, student_id, grade_value))
+        UndoCommand = CommandThatCanBeCalled(self.remove_grade, *(discipline_id, student_id, grade_value))
+        UndoRedoCommand = [Operation(UndoCommand, RedoCommand)]
+        self.undo_service.register_operation(OperationThatCascades(UndoRedoCommand))
 
         self.__grade_repository.add_grade(discipline_id, student_id, grade_value)
 

@@ -213,20 +213,22 @@ class Ui:
         SEARCH_FOR_STUDENTS = '4'
         SEARCH_FOR_DISCIPLINES = '5'
         DISPLAY_STATISTICS = '6'
-        UNDO = '7'
-        REDO = '8'
+        DISPLAY_GRADES = '7'
+        UNDO = '8'
+        REDO = '9'
         EXIT = '0'
 
         while True:
-            #try:
+            try:
                 print("1. Manage students")
                 print("2. Manage disciplines")
                 print("3. Grade student")
                 print("4. Search for students")
                 print("5. Search for disciplines")
                 print("6. Display statistics")
-                print("7. Undo last operation")
-                print("8. Redo")
+                print("7. Display Grades")
+                print("8. Undo last operation")
+                print("9. Redo")
                 print("0. Exit")
 
                 chosen_option = input("Enter option: ")
@@ -247,9 +249,9 @@ class Ui:
                     self.undo_service.undo()
                 elif chosen_option == REDO:
                     self.undo_service.redo()
-                elif chosen_option == '9':
+                elif chosen_option == DISPLAY_GRADES:
                     self.display_grades()
                 elif chosen_option == EXIT:
                     exit()
-            #except Exception as exception_message:
-              #  print(exception_message)
+            except Exception as exception_message:
+                print(exception_message)

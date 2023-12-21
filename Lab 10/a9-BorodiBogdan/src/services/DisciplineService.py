@@ -1,5 +1,6 @@
 import random
-from src.domain.command import *
+from src.domain.commandthatcanbecalled import *
+
 
 class DisciplineService:
     def __init__(self, discipline_repository, grade_repository, undo_service):
@@ -21,41 +22,41 @@ class DisciplineService:
             self.add_discipline(random_id, list_of_disciplines[random_number])
 
     def add_discipline(self, discipline_id, discipline_name):
-        UndoCommand = Command(self.remove_discipline, (discipline_id))
-        RedoCommand = Command(self.add_discipline, *(discipline_id, discipline_name))
-        Operations = [Operation(UndoCommand, RedoCommand)]
-        self.UndoRedoService.register(CascadianOperation(Operations))
+        UndoCommand = CommandThatCanBeCalled(self.remove_discipline, (discipline_id))
+        RedoCommand = CommandThatCanBeCalled(self.add_discipline, *(discipline_id, discipline_name))
+        UndoRedoCommand = [Operation(UndoCommand, RedoCommand)]
+        self.UndoRedoService.register_operation(OperationThatCascades(UndoRedoCommand))
 
         self.__discipline_repository.add_discipline(discipline_id, discipline_name)
 
     def remove_discipline(self, discipline_id):
         list_of_commands = []
-        UndoOperation = Command(self.__discipline_repository.add_discipline, *(discipline_id, self.get_discipline_name(discipline_id)))
-        RedoOperation = Command(self.__discipline_repository.remove_discipline_with_given_id, *(discipline_id))
-        OperationForRedoUndo = Operation(UndoOperation, RedoOperation)
+        UndoOperation = CommandThatCanBeCalled(self.__discipline_repository.add_discipline, *(discipline_id, self.get_discipline_name(discipline_id)))
+        RedoOperation = CommandThatCanBeCalled(self.__discipline_repository.remove_discipline_with_given_id, *(discipline_id))
+        UndoRedoCommand = Operation(UndoOperation, RedoOperation)
         self.__discipline_repository.remove_discipline_with_given_id(discipline_id)
 
-        list_of_commands.append(OperationForRedoUndo)
+        list_of_commands.append(UndoRedoCommand)
         self.__discipline_repository.remove_discipline_with_given_id(discipline_id)
         grades_list = self.__grade_repository.get_all()
 
         for grade in grades_list:
             if str(grade.get_discipline_id) == str(discipline_id):
-                UndoOperation = Command(self.__grade_repository.add_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
-                RedoOperation = Command(self.__grade_repository.remove_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
-                OperationForRedoUndo = Operation(UndoOperation, RedoOperation)
-                list_of_commands.append(OperationForRedoUndo)
+                UndoOperation = CommandThatCanBeCalled(self.__grade_repository.add_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
+                RedoOperation = CommandThatCanBeCalled(self.__grade_repository.remove_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
+                UndoRedoCommand = Operation(UndoOperation, RedoOperation)
+                list_of_commands.append(UndoRedoCommand)
 
                 self.__grade_repository.remove_grade(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value)
 
-        self.UndoRedoService.register(CascadianOperation(list_of_commands))
+        self.UndoRedoService.register_operation(OperationThatCascades(list_of_commands))
 
     def update_discipline(self, discipline_id, new_name):
-        RedoCommand = Command(self.update_discipline, *(discipline_id, new_name))
-        UndoCommand = Command(self.update_discipline, *(discipline_id, self.get_discipline_name(discipline_id)))
+        RedoCommand = CommandThatCanBeCalled(self.update_discipline, *(discipline_id, new_name))
+        UndoCommand = CommandThatCanBeCalled(self.update_discipline, *(discipline_id, self.get_discipline_name(discipline_id)))
 
-        Operations = [Operation(UndoCommand, RedoCommand)]
-        self.UndoRedoService.register(CascadianOperation(Operations))
+        UndoRedoCommand = [Operation(UndoCommand, RedoCommand)]
+        self.UndoRedoService.register_operation(OperationThatCascades(UndoRedoCommand))
 
         self.__discipline_repository.update_disciplines_id(discipline_id, new_name)
 

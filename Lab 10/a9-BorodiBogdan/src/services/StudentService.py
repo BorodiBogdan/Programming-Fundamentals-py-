@@ -1,6 +1,5 @@
 import random
-from src.domain.command import *
-from src.services.UndoService import UndoService
+from src.domain.commandthatcanbecalled import *
 
 class StudentService:
     def __init__(self, student_repository, grade_repository, undo_service):
@@ -23,10 +22,10 @@ class StudentService:
 
     def add_student(self, student_id, student_name):
         self.__student_repository.add_student(student_id, student_name)
-        UndoCommand = Command(self.__student_repository.remove_student, (student_id))
-        RedoCommand = Command(self.__student_repository.add_student, *(student_id, student_name))
-        Operations = [Operation(UndoCommand, RedoCommand)]
-        self.UndoRedoService.register(CascadianOperation(Operations))
+        UndoCommand = CommandThatCanBeCalled(self.__student_repository.remove_student, (student_id))
+        RedoCommand = CommandThatCanBeCalled(self.__student_repository.add_student, *(student_id, student_name))
+        UndoRedoCommand = [Operation(UndoCommand, RedoCommand)]
+        self.UndoRedoService.register_operation(OperationThatCascades(UndoRedoCommand))
 
     def get_all_students(self):
         return self.__student_repository.get_all_students()
@@ -47,8 +46,8 @@ class StudentService:
 
     def remove_student(self, student_id):
         list_of_commands = []
-        UndoOperation = Command(self.__student_repository.add_student, *(student_id, self.get_student_name(student_id)))
-        RedoOperation = Command(self.__student_repository.remove_student, student_id)
+        UndoOperation = CommandThatCanBeCalled(self.__student_repository.add_student, *(student_id, self.get_student_name(student_id)))
+        RedoOperation = CommandThatCanBeCalled(self.__student_repository.remove_student, student_id)
         OperationForRedoUndo = Operation(UndoOperation, RedoOperation)
 
         list_of_commands.append(OperationForRedoUndo)
@@ -58,21 +57,21 @@ class StudentService:
 
         for grade in grades_list:
             if grade.get_student_id == student_id:
-                UndoOperation = Command(self.__grade_repository.add_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
-                RedoOperation = Command(self.__grade_repository.remove_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
+                UndoOperation = CommandThatCanBeCalled(self.__grade_repository.add_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
+                RedoOperation = CommandThatCanBeCalled(self.__grade_repository.remove_grade, *(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value))
                 OperationForRedoUndo = Operation(UndoOperation, RedoOperation)
                 list_of_commands.append(OperationForRedoUndo)
                 self.__grade_repository.remove_grade(grade.get_discipline_id, grade.get_student_id, grade.get_grade_value)
 
 
-        self.UndoRedoService.register(CascadianOperation(list_of_commands))
+        self.UndoRedoService.register_operation(OperationThatCascades(list_of_commands))
 
     def update_student(self, student_id, name):
-        RedoCommand = Command(self.__student_repository.update_student_by_id, *(student_id, name))
-        UndoCommand = Command(self.__student_repository.update_student_by_id, *(student_id, self.get_student_name(student_id)))
+        RedoCommand = CommandThatCanBeCalled(self.__student_repository.update_student_by_id, *(student_id, name))
+        UndoCommand = CommandThatCanBeCalled(self.__student_repository.update_student_by_id, *(student_id, self.get_student_name(student_id)))
 
-        Operations = [Operation(UndoCommand, RedoCommand)]
-        self.UndoRedoService.register(CascadianOperation(Operations))
+        UndoRedoCommand = [Operation(UndoCommand, RedoCommand)]
+        self.UndoRedoService.register_operation(OperationThatCascades(UndoRedoCommand))
 
         self.__student_repository.update_student_by_id(student_id, name)
 
@@ -94,9 +93,3 @@ class StudentService:
                 desired_students_list.append(student)
 
         return desired_students_list
-
-    def undo(self):
-       self.UndoRedoService.undo()
-
-    def redo(self):
-        self.UndoRedoService.redo()
